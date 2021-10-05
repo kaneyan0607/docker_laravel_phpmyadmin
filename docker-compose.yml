@@ -1,0 +1,52 @@
+# docker-composeで使用するバージョンを定義しています。
+version: "3"
+# アプリケーションを動かすための各要素のこと。servicesの中に、app、db、phpmyadminが子要素として設定されています。
+services:
+  # laravelを動かすコンテナがここから下に記載されています。
+  app:
+    #コンテナの名前をここで決めます。
+    container_name: laravel_app
+    # どのポートを繋ぐかという設定です。ホストの8080番ポートとコンテナの８０番をつないでいる。80番ポートのバーチャルホストは000-default.confにて設定済みです。
+    ports:
+      - "8000:80"
+    # Dockerfileの設定の場所を指定しています。Dockerfileの内容に基づいてビルドします。
+    build: ./Docker/App
+    # コンテナとホスト側のディレクトリを同期する場所をここで指定しています。ここにlaravelのソースが入ります。
+    volumes:
+      - ./src:/var/www/html
+  # MySQLを動かすコンテナがここから設定されています。
+  db:
+    #Docker HubからMySQL5.7の公式イメージを引っ張ってくる設定です。
+    image: mysql:5.7
+    # コンテナ名を指定しています。
+    container_name: laravel_db
+    # MySQLのコンテナ内の環境変数を指定しています。任意のものを設定してください。
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laraveldb
+      MYSQL_USER: dbuser
+      MYSQL_PASSWORD: dbpass
+      TZ: "Asia/Tokyo"
+    # 起動時のコマンドになります。
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    # ディレクトリの同期をしています。ここを書かないとコンテナを閉じたときにデータベースからデータがなくなるので注意してください。詳しくはdocker 永続化などと調べると良いかもです。
+    volumes:
+      - ./Docker/DB/volume:/var/lib/mysql
+      - ./Docker/DB/my.cnf:/etc/mysql/conf.d/my.cnf
+    # ホストの13306番ポートとコンテナのなかの3306番ポートとつなげる設定です。
+    ports:
+      - 13306:3306
+  # phpmyadminの設定が書きに記載します。
+  phpmyadmin:
+    #コンテナ名を決めています。
+    container_name: phpmyadmin
+    #DockerHubからphpmyadminのイメージを引っ張ってくる設定です。
+    image: phpmyadmin/phpmyadmin
+    #phpmyadminの環境変数の設定です。MySQLの設定を参照して記載してください。PMA_HOSTSにはservicesのdbを指定しています。
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOSTS=db
+      - PMA_USER=root
+      - PMA_PASSWORD=root
+    ports:
+      - 3000:80
