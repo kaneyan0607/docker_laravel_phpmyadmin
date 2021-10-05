@@ -1,1 +1,1 @@
-# docker_laravel_phpmyadmin
+# docker で Laravel+MySQL+phpMyadmin の環境構築
